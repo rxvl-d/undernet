@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Annotation</title>
+    <style>
+        body {
+            width: 300px;
+            padding: 10px;
+        }
+        button {
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
     <div id="loginContainer">
@@ -22,12 +31,14 @@
     <div id="taskContainer" style="display:none;">
         <h2>Current Task</h2>
         <p id="taskQuestion"></p>
-        <form id="annotationForm" data-task-id="">
-            <label for="annotationInput">Annotation:</label>
-            <textarea id="annotationInput" name="annotation" required></textarea>
-            <br>
+        <form id="annotationForm">
+            <div id="annotationInput"></div>
             <button type="submit">Submit Annotation</button>
         </form>
+        <div>
+            <button id="prevButton">Previous Task</button>
+            <button id="nextButton">Next Task</button>
+        </div>
     </div>
 
     <script src="popup.js"></script>

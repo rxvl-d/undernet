@@ -1,12 +1,12 @@
 from app import create_app, db
-from models import User, Task, Annotation, user_tasks
+from models import User, Task, Annotation, UserTasks
 
 app = create_app()
 
 def clear_data():
     with app.app_context():
         db.session.query(Annotation).delete()
-        db.session.query(user_tasks).delete()
+        db.session.query(UserTasks).delete()
         db.session.query(Task).delete()
         db.session.query(User).delete()
         db.session.commit()
@@ -14,7 +14,6 @@ def clear_data():
 def seed_data():
     with app.app_context():
         clear_data()
-        # return
         # Create users
         users = [
             User(username="user1"),
@@ -31,27 +30,29 @@ def seed_data():
             'https://python.org',
             'https://javascript.info',
             'https://wikipedia.org',
-            'https://github.com',
-            'https://stackoverflow.com',
-            'https://reddit.com',
-            'https://news.ycombinator.com',
-            'https://dev.to',
-            'https://medium.com'
+            'https://github.com'
         ]
         for i, url in enumerate(urls):
-            task = Task(
-                url=url,
-                question=f"Is this URL ({url}) relevant to the query 'blah'?"
-            )
+            if i % 2 == 0:
+                question = {
+                    'type': 'relevance',
+                    'text': f"Is this URL ({url}) relevant to the query 'programming'?"
+                }
+            else:
+                question = {
+                    'type': 'selection',
+                    'text': f"Which part of the web page at {url} is relevant to 'programming', or is all of it relevant?"
+                }
+            task = Task(url=url, question=question)
             tasks.append(task)
-            if i > 0:
-                tasks[i-1].next_task_id = task.id
         
         db.session.add_all(tasks)
 
-        # Assign the same start task to both users
-        users[0].tasks.append(tasks[0])
-        users[1].tasks.append(tasks[0])
+        # Assign all tasks to both users with order
+        for user in users:
+            for i, task in enumerate(tasks):
+                user_task = UserTasks(user=user, task=task, order=i)
+                db.session.add(user_task)
 
         db.session.commit()
         print(f"Seeded {len(users)} users and {len(tasks)} tasks.")

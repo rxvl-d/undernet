@@ -20,7 +20,7 @@ def create_app(test_config=None):
     jwt.init_app(app)
 
     with app.app_context():
-        from models import User, Task, Annotation
+        from models import User, Task, Annotation, UserTasks
         
     @app.route('/api/login', methods=['POST'])
     def login():
@@ -34,30 +34,58 @@ def create_app(test_config=None):
         else:
             return jsonify({"msg": "Bad username or password"}), 401
 
-    @app.route('/api/task', methods=['GET'])
+    @app.route('/api/task/<int:task_id>', methods=['GET'])
     @jwt_required()
-    def get_task():
+    def get_task(task_id):
         current_user = User.query.filter_by(username=get_jwt_identity()).first()
-        task = current_user.get_tasks()[0] if current_user.get_tasks() else None
+        user_task = UserTasks.query.filter_by(user_id=current_user.id, task_id=task_id).first()
         
-        if task:
-            return jsonify({'id': task.id, 'url': task.url, 'question': task.question})
+        if user_task:
+            task = user_task.task
+            prev_task = UserTasks.query.filter_by(user_id=current_user.id, order=user_task.order-1).first()
+            next_task = UserTasks.query.filter_by(user_id=current_user.id, order=user_task.order+1).first()
+            return jsonify({
+                'id': task.id,
+                'url': task.url,
+                'question': task.question,
+                'prev_task_id': prev_task.task_id if prev_task else None,
+                'next_task_id': next_task.task_id if next_task else None
+            })
         else:
-            return jsonify({'error': 'No tasks available'}), 404
-                
+            return jsonify({'error': 'Task not found or not assigned to user'}), 404
+
+    @app.route('/api/task/', methods=['GET'])
+    @jwt_required()
+    def get_tasks():
+        current_user = User.query.filter_by(username=get_jwt_identity()).first()
+        first_user_task = UserTasks.query.filter_by(user_id=current_user.id).order_by(UserTasks.order).first()
+        
+        if first_user_task:
+            task = first_user_task.task
+            next_task = UserTasks.query.filter_by(user_id=current_user.id, order=first_user_task.order+1).first()
+            return jsonify({
+                'id': task.id,
+                'url': task.url,
+                'question': task.question,
+                'prev_task_id': None,
+                'next_task_id': next_task.task_id if next_task else None
+            })
+        else:
+            return jsonify({'error': 'No tasks assigned to user'}), 404
+        
     @app.route('/api/annotation', methods=['POST'])
     @jwt_required()
     def submit_annotation():
         data = request.json
         task_id = data.get('taskId')
-        annotation_text = data.get('annotation')
+        annotation_data = data.get('annotation')
         
-        if not task_id or not annotation_text:
+        if not task_id or not annotation_data:
             return jsonify({'error': 'Missing taskId or annotation'}), 400
         
         current_user = User.query.filter_by(username=get_jwt_identity()).first()
         
-        annotation = Annotation(task_id=task_id, user_id=current_user.id, annotation=annotation_text)
+        annotation = Annotation(task_id=task_id, user_id=current_user.id, annotation=annotation_data)
         db.session.add(annotation)
         db.session.commit()
         
