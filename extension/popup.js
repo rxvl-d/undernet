@@ -70,13 +70,25 @@ document.addEventListener('DOMContentLoaded', function() {
             const selectedOption = document.querySelector('input[name="relevance"]:checked');
             annotation = { type: 'relevance', value: selectedOption ? selectedOption.value : null };
         } else if (taskType === 'selection') {
-            const selectedOption = document.querySelector('input[name="selection"]:checked');
-            annotation = { 
-                type: 'selection', 
-                value: selectedOption ? selectedOption.value : null,
-                boundingBox: selectedOption && selectedOption.value === 'part' ? getBoundingBox() : null
-            };
-        }
+            const partRadio = document.getElementById('part');
+            const boundingBoxContainer = document.getElementById('boundingBoxContainer');
+            const drawBoundingBoxButton = document.getElementById('drawBoundingBox');
+        
+            partRadio.addEventListener('change', function() {
+                boundingBoxContainer.style.display = this.checked ? 'block' : 'none';
+            });
+        
+            drawBoundingBoxButton.addEventListener('click', function(event) {
+                event.preventDefault(); // Prevent form submission
+                chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+                    chrome.tabs.sendMessage(tabs[0].id, {action: "drawBoundingBox"}, function(response) {
+                        if (response && response.boundingBox) {
+                            console.log("Received bounding box:", response.boundingBox);
+                            // TODO: Update the UI to show the bounding box information
+                        }
+                    });
+                });
+            });        }
 
         if (!annotation.value) {
             alert('Please select an option before submitting.');
@@ -159,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showLoginContainer();
         });
     }
-    
+
     function fetchAnnotation(taskId) {
         fetch(backend + '/api/annotation/' + taskId, {
             method: 'GET',
@@ -268,65 +280,5 @@ document.addEventListener('DOMContentLoaded', function() {
     function getBoundingBox() {
         // TODO: Implement bounding box retrieval
         return null;
-    }
-});
-
-// ./extension/content.js
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if (request.action === "drawBoundingBox") {
-        // Create a div for the overlay
-        const overlay = document.createElement('div');
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100%';
-        overlay.style.height = '100%';
-        overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
-        overlay.style.zIndex = '10000';
-        document.body.appendChild(overlay);
-
-        let startX, startY, endX, endY;
-        let drawing = false;
-
-        overlay.addEventListener('mousedown', startDrawing);
-        overlay.addEventListener('mousemove', draw);
-        overlay.addEventListener('mouseup', endDrawing);
-
-        function startDrawing(e) {
-            drawing = true;
-            startX = e.clientX;
-            startY = e.clientY;
-        }
-
-        function draw(e) {
-            if (!drawing) return;
-            endX = e.clientX;
-            endY = e.clientY;
-            drawRect();
-        }
-
-        function endDrawing() {
-            drawing = false;
-            const boundingBox = {
-                x: Math.min(startX, endX),
-                y: Math.min(startY, endY),
-                width: Math.abs(endX - startX),
-                height: Math.abs(endY - startY)
-            };
-            chrome.runtime.sendMessage({action: "boundingBoxDrawn", boundingBox: boundingBox});
-            document.body.removeChild(overlay);
-        }
-
-        function drawRect() {
-            const rect = document.createElement('div');
-            rect.style.position = 'absolute';
-            rect.style.left = `${Math.min(startX, endX)}px`;
-            rect.style.top = `${Math.min(startY, endY)}px`;
-            rect.style.width = `${Math.abs(endX - startX)}px`;
-            rect.style.height = `${Math.abs(endY - startY)}px`;
-            rect.style.border = '2px solid red';
-            overlay.innerHTML = '';
-            overlay.appendChild(rect);
-        }
     }
 });
