@@ -5,12 +5,17 @@
     "description": "Annotate web pages for research purposes",
     "permissions": [
       "activeTab",
+      "tabs",
       "storage",
       "http://127.0.0.1:5000/"
     ],
     "browser_action": {
-      "default_popup": "popup.html"
-    },
+        "default_icon": "icon.png",
+        "default_title": "Open Annotation Tool"
+      },
+    "background": {
+        "service_worker": "background.js"
+      },
     "content_scripts": [
       {
         "matches": [

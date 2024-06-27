@@ -1,3 +1,12 @@
+let currentTabId = null;
+
+// Get the current tab when the popup opens
+chrome.tabs.query({active: true, currentWindow: false}, function(tabs) {
+  if (tabs[0]) {
+    currentTabId = tabs[0].id;
+  }
+});
+
 const backend = 'http://127.0.0.1:5000';
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -132,12 +141,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 taskQuestion.textContent = data.question.text;
                 renderAnnotationForm(data.question.type);
                 updateNavigationButtons(data.prev_task_id, data.next_task_id);
-                // Update the URL of the current tab using chrome.tabs.update
-                chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-                    chrome.tabs.update(tabs[0].id, { url: data.url }, function(tab) {
+                
+                // Update the URL of the current tab using a message to the background script
+                chrome.runtime.sendMessage({action: "updateTab", tabId: currentTabId, url: data.url}, (response) => {
+                    if (response && response.success) {
                         // After the tab is updated, fetch the annotation
                         fetchAnnotation(data.id);
-                    });
+                    } else {
+                        console.error('Failed to update tab:', response ? response.error : 'Unknown error');
+                    }
                 });
             }
         })
@@ -147,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showLoginContainer();
         });
     }
-
+    
     function fetchAnnotation(taskId) {
         fetch(backend + '/api/annotation/' + taskId, {
             method: 'GET',
