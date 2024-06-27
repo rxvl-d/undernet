@@ -99,20 +99,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     prevButton.addEventListener('click', function() {
         const prevTaskId = taskContainer.getAttribute('data-prev-task-id');
-        if (prevTaskId) {
+        if (prevTaskId && prevTaskId !== 'null') {
             fetchTask(prevTaskId);
         }
     });
-
+    
     nextButton.addEventListener('click', function() {
         const nextTaskId = taskContainer.getAttribute('data-next-task-id');
-        if (nextTaskId) {
+        if (nextTaskId && nextTaskId !== 'null') {
             fetchTask(nextTaskId);
         }
     });
 
     function fetchTask(taskId = null) {
-        const url = taskId ? `${backend}/api/task/${taskId}` : `${backend}/api/task`;
+        const url = taskId && taskId !== 'null' ? `${backend}/api/task/${taskId}` : `${backend}/api/task`;
         fetch(url, {
             method: 'GET',
             headers: {

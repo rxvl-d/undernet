@@ -82,6 +82,38 @@ class TestApp(unittest.TestCase):
         self.assertIsNone(data['prev_task_id'])
         self.assertEqual(data['next_task_id'], 2)
 
+    def test_get_tasks_api_unannotated(self):
+        token = self.test_login_api()
+        
+        response = self.client.get('/api/task/', 
+                                   headers={'Authorization': f'Bearer {token}'})
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['url'], 'http://example.com')
+        self.assertEqual(data['question']['text'], 'Test question 1?')
+        self.assertIsNone(data['prev_task_id'])
+        self.assertEqual(data['next_task_id'], 2)
+
+    def test_get_tasks_api_all_annotated(self):
+        token = self.test_login_api()
+
+        # Annotate all tasks
+        with self.app.app_context():
+            user = User.query.filter_by(username='testuser').first()
+            tasks = Task.query.all()
+            for task in tasks:
+                annotation = Annotation(task_id=task.id, user_id=user.id, annotation={'type': 'test', 'value': 'test'})
+                db.session.add(annotation)
+            db.session.commit()
+
+        # Try to get a task
+        response = self.client.get('/api/task/', 
+                                   headers={'Authorization': f'Bearer {token}'})
+        self.assertEqual(response.status_code, 404)
+        data = json.loads(response.data)
+        self.assertEqual(data['error'], 'No unannotated tasks available')
+
+
     def test_get_tasks_api(self):
         token = self.test_login_api()
         

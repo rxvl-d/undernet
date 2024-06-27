@@ -58,20 +58,29 @@ def create_app(test_config=None):
     @jwt_required()
     def get_tasks():
         current_user = User.query.filter_by(username=get_jwt_identity()).first()
-        first_user_task = UserTasks.query.filter_by(user_id=current_user.id).order_by(UserTasks.order).first()
         
-        if first_user_task:
-            task = first_user_task.task
-            next_task = UserTasks.query.filter_by(user_id=current_user.id, order=first_user_task.order+1).first()
+        # Find the first unannotated task
+        unannotated_task = db.session.query(Task).\
+            join(UserTasks).\
+            outerjoin(Annotation, (Annotation.task_id == Task.id) & (Annotation.user_id == current_user.id)).\
+            filter(UserTasks.user_id == current_user.id).\
+            filter(Annotation.id == None).\
+            order_by(UserTasks.order).\
+            first()
+        
+        if unannotated_task:
+            user_task = UserTasks.query.filter_by(user_id=current_user.id, task_id=unannotated_task.id).first()
+            next_task = UserTasks.query.filter_by(user_id=current_user.id, order=user_task.order+1).first()
+            prev_task = UserTasks.query.filter_by(user_id=current_user.id, order=user_task.order-1).first()
             return jsonify({
-                'id': task.id,
-                'url': task.url,
-                'question': task.question,
-                'prev_task_id': None,
+                'id': unannotated_task.id,
+                'url': unannotated_task.url,
+                'question': unannotated_task.question,
+                'prev_task_id': prev_task.task_id if prev_task else None,
                 'next_task_id': next_task.task_id if next_task else None
             })
         else:
-            return jsonify({'error': 'No tasks assigned to user'}), 404
+            return jsonify({'error': 'No unannotated tasks available'}), 404
         
     @app.route('/api/annotation', methods=['POST'])
     @jwt_required()
