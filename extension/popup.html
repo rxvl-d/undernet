@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Annotation</title>
+</head>
+<body>
+    <div id="loginContainer">
+        <h2>Login</h2>
+        <form id="loginForm">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+            <br>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <br>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+    <div id="taskContainer" style="display:none;">
+        <h2>Current Task</h2>
+        <p id="taskQuestion"></p>
+        <form id="annotationForm" data-task-id="">
+            <label for="annotationInput">Annotation:</label>
+            <textarea id="annotationInput" name="annotation" required></textarea>
+            <br>
+            <button type="submit">Submit Annotation</button>
+        </form>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
