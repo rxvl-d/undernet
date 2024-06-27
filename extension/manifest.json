@@ -1,21 +1,24 @@
 {
     "manifest_version": 2,
-    "name": "undernet",
+    "name": "Web Page Annotator",
     "version": "1.0",
-    "description": "Collect annotations of web pages",
-    "permissions": ["activeTab", "storage"],
+    "description": "Annotate web pages for research purposes",
+    "permissions": [
+      "activeTab",
+      "storage",
+      "http://127.0.0.1:5000/"
+    ],
     "browser_action": {
       "default_popup": "popup.html"
     },
-    "background": {
-      "scripts": ["background.js"],
-      "persistent": false
-    },
     "content_scripts": [
       {
-        "matches": ["<all_urls>"],
-        "js": ["content.js"]
+        "matches": [
+          "<all_urls>"
+        ],
+        "js": [
+          "content.js"
+        ]
       }
     ]
   }
-  

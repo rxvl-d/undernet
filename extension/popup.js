@@ -10,6 +10,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let token = '';
 
+    // Check for existing token when popup is opened
+    chrome.storage.local.get(['token'], function(result) {
+        if (result.token) {
+            token = result.token;
+            showTaskContainer();
+            fetchTask();
+        } else {
+            showLoginContainer();
+        }
+    });
+
     loginForm.addEventListener('submit', function(event) {
         event.preventDefault();
         const username = document.getElementById('username').value;
@@ -26,8 +37,11 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.access_token) {
                 token = data.access_token;
-                loginContainer.style.display = 'none';
-                taskContainer.style.display = 'block';
+                // Store the token
+                chrome.storage.local.set({token: token}, function() {
+                    console.log('Token is stored in local storage');
+                });
+                showTaskContainer();
                 fetchTask();
             } else {
                 alert('Login failed');
@@ -38,9 +52,9 @@ document.addEventListener('DOMContentLoaded', function() {
     annotationForm.addEventListener('submit', function(event) {
         event.preventDefault();
         const annotation = annotationInput.value;
-        const taskId = annotationForm.getAttribute('data-task-id');
+        const taskId = taskContainer.getAttribute('data-task-id');
 
-        fetch(backend + '/api/annotation', {
+        fetch(backend + '/api/annotation/' + taskId, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -81,6 +95,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 });
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // If there's an error (e.g., invalid token), show login form
+            showLoginContainer();
         });
     }
 
@@ -101,5 +120,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 // The question is already set in fetchTask, so we don't need to set it here
             }
         });
+    }
+
+    function showTaskContainer() {
+        loginContainer.style.display = 'none';
+        taskContainer.style.display = 'block';
+    }
+
+    function showLoginContainer() {
+        loginContainer.style.display = 'block';
+        taskContainer.style.display = 'none';
     }
 });

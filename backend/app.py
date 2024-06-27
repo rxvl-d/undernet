@@ -63,4 +63,15 @@ def create_app(test_config=None):
         
         return jsonify({'success': True})
 
+    @app.route('/api/annotation/<int:task_id>', methods=['GET'])
+    @jwt_required()
+    def get_annotation(task_id):
+        current_user = User.query.filter_by(username=get_jwt_identity()).first()
+        annotation = Annotation.query.filter_by(task_id=task_id, user_id=current_user.id).first()
+        
+        if annotation:
+            return jsonify({'annotation': annotation.annotation})
+        else:
+            return jsonify({'annotation': None})
+
     return app

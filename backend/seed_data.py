@@ -21,7 +21,7 @@ def seed_data():
             User(username="user2")
         ]
         for user in users:
-            user.set_password(f"password_{user.username}")
+            user.set_password(f"{user.username}")
         db.session.add_all(users)
 
         # Create tasks
