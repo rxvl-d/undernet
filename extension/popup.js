@@ -6,7 +6,7 @@ chrome.tabs.query({active: true, currentWindow: false}, function(tabs) {
     currentTabId = tabs[0].id;
   }
 });
-
+console.log('currentTabId:', currentTabId);
 const backend = 'http://127.0.0.1:5000';
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -80,15 +80,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
             drawBoundingBoxButton.addEventListener('click', function(event) {
                 event.preventDefault(); // Prevent form submission
-                chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                    chrome.tabs.sendMessage(tabs[0].id, {action: "drawBoundingBox"}, function(response) {
-                        if (response && response.boundingBox) {
-                            console.log("Received bounding box:", response.boundingBox);
-                            // TODO: Update the UI to show the bounding box information
-                        }
-                    });
+                chrome.tabs.sendMessage(currentTabId, {action: "drawBoundingBox"}, function(response) {
+                    if (response && response.boundingBox) {
+                        console.log("Received bounding box:", response.boundingBox);
+                        // TODO: Update the UI to show the bounding box information
+                    }
                 });
-            });        }
+            });       
+        }
 
         if (!annotation.value) {
             alert('Please select an option before submitting.');
