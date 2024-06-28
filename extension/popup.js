@@ -71,22 +71,9 @@ document.addEventListener('DOMContentLoaded', function() {
             annotation = { type: 'relevance', value: selectedOption ? selectedOption.value : null };
         } else if (taskType === 'selection') {
             const partRadio = document.getElementById('part');
-            const boundingBoxContainer = document.getElementById('boundingBoxContainer');
             const drawBoundingBoxButton = document.getElementById('drawBoundingBox');
-        
-            partRadio.addEventListener('change', function() {
-                boundingBoxContainer.style.display = this.checked ? 'block' : 'none';
-            });
-        
-            drawBoundingBoxButton.addEventListener('click', function(event) {
-                event.preventDefault(); // Prevent form submission
-                chrome.tabs.sendMessage(currentTabId, {action: "drawBoundingBox"}, function(response) {
-                    if (response && response.boundingBox) {
-                        console.log("Received bounding box:", response.boundingBox);
-                        // TODO: Update the UI to show the bounding box information
-                    }
-                });
-            });       
+            const boundingBox = drawBoundingBoxButton.getAttribute('data-bounding-box');
+            annotation = { type: 'selection', value: partRadio.checked, boundingBox: boundingBox };
         }
 
         if (!annotation.value) {
@@ -235,9 +222,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 boundingBoxContainer.style.display = this.checked ? 'block' : 'none';
             });
 
-            drawBoundingBoxButton.addEventListener('click', function() {
-                chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                    chrome.tabs.sendMessage(tabs[0].id, {action: "drawBoundingBox"});
+            drawBoundingBoxButton.addEventListener('click', function(event) {
+                event.preventDefault();
+                chrome.tabs.sendMessage(currentTabId, {action: "drawBoundingBox"}, function(response) {
+                    if (response && response.boundingBox) {
+                        console.log("Received bounding box:", response.boundingBox);
+                        drawBoundingBoxButton.setAttribute('data-bounding-box', JSON.stringify(response.boundingBox));
+                        // TODO: Update the UI to show the bounding box information
+                    }
                 });
             });
         }

@@ -30,7 +30,12 @@ def seed_data():
             'https://python.org',
             'https://javascript.info',
             'https://wikipedia.org',
-            'https://github.com'
+            'https://github.com',
+            'https://example.com',
+            'https://python.org',
+            'https://javascript.info',
+            'https://wikipedia.org',
+            'https://github.com',
         ]
         for i, url in enumerate(urls):
             if i % 2 == 0:
