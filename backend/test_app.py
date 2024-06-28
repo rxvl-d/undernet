@@ -146,6 +146,34 @@ class TestApp(unittest.TestCase):
             self.assertIsNotNone(annotation)
             self.assertEqual(annotation.annotation['type'], 'relevance')
             self.assertEqual(annotation.annotation['value'], 'relevant')
+    def test_update_existing_annotation_api(self):
+        token = self.test_login_api()
+
+        self.client.post('/api/annotation', 
+                        data=json.dumps({
+                            'taskId': 1,
+                            'annotation': {'type': 'relevance', 'value': 'relevant'}
+                        }),
+                        headers={'Authorization': f'Bearer {token}'},
+                        content_type='application/json')
+
+        response = self.client.post('/api/annotation', 
+                                    data=json.dumps({
+                                        'taskId': 1,
+                                        'annotation': {'type': 'relevance', 'value': 'not_relevant'}
+                                    }),
+                                    headers={'Authorization': f'Bearer {token}'},
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertTrue(data['success'])
+
+        with self.app.app_context():
+            user = User.query.filter_by(username='testuser').first()
+            annotations = Annotation.query.filter_by(user_id=user.id, task_id=1).all()
+            self.assertEqual(len(annotations), 1) 
+            self.assertEqual(annotations[0].annotation['type'], 'relevance')
+            self.assertEqual(annotations[0].annotation['value'], 'not_relevant') 
 
     def test_get_annotation_api(self):
         token = self.test_login_api()
@@ -168,4 +196,5 @@ class TestApp(unittest.TestCase):
         self.assertEqual(data['annotation']['value'], 'relevant')
 
 if __name__ == '__main__':
+
     unittest.main()

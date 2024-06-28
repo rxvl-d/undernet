@@ -94,10 +94,19 @@ def create_app(test_config=None):
         
         current_user = User.query.filter_by(username=get_jwt_identity()).first()
         
-        annotation = Annotation(task_id=task_id, user_id=current_user.id, annotation=annotation_data)
-        db.session.add(annotation)
-        db.session.commit()
+        # Check if an annotation already exists for this task and user
+        existing_annotation = Annotation.query.filter_by(task_id=task_id, user_id=current_user.id).first()
         
+        if existing_annotation:
+            # Update the existing annotation
+            existing_annotation.annotation = annotation_data
+        else:
+            # Create a new annotation
+            new_annotation = Annotation(task_id=task_id, user_id=current_user.id, annotation=annotation_data)
+            db.session.add(new_annotation)
+        
+        db.session.commit()
+    
         return jsonify({'success': True})
 
     @app.route('/api/annotation/<int:task_id>', methods=['GET'])

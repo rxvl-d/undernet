@@ -228,7 +228,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (response && response.boundingBox) {
                         console.log("Received bounding box:", response.boundingBox);
                         drawBoundingBoxButton.setAttribute('data-bounding-box', JSON.stringify(response.boundingBox));
-                        // TODO: Update the UI to show the bounding box information
                     }
                 });
             });
