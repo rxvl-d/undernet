@@ -18,6 +18,39 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginContainer = document.getElementById('loginContainer');
     const prevButton = document.getElementById('prevButton');
     const nextButton = document.getElementById('nextButton');
+    const startDrawingButton = document.getElementById('startDrawing');
+    const stopDrawingButton = document.getElementById('stopDrawing');
+    const boundingBoxContainer = document.getElementById('boundingBoxContainer');
+
+    startDrawingButton.addEventListener('click', function(event) {
+        event.preventDefault();
+        chrome.tabs.sendMessage(currentTabId, {action: "startDrawingMode"});
+    });
+
+    stopDrawingButton.addEventListener('click', function(event) {
+        event.preventDefault();
+        chrome.tabs.sendMessage(currentTabId, {action: "stopDrawingMode"});
+    });
+
+    chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+        if (request.action === "updateBoundingBoxes") {
+            displayBoundingBoxes(request.boundingBoxes);
+        }
+    });
+    
+    function displayBoundingBoxes(boundingBoxes) {
+        boundingBoxContainer.innerHTML = '';
+        boundingBoxes.forEach((box, index) => {
+            if (box.image) {
+                const img = document.createElement('img');
+                img.src = box.image;
+                img.style.maxWidth = '100px';
+                img.style.maxHeight = '100px';
+                img.style.margin = '5px';
+                boundingBoxContainer.appendChild(img);
+            }
+        });
+    }
 
     let token = '';
     let currentTaskId = null;
